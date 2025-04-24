@@ -35,6 +35,17 @@ export default function Home() {
   const [aiPrefetched, setAiPrefetched] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiVisible, setAiVisible] = useState(false);
+
+  // Search history state
+  const [queryHistory, setQueryHistory] = useState<string[]>([]);
+
+  // Track search history (only add unique, non-empty queries)
+  useEffect(() => {
+    if (query && !queryHistory.includes(query)) {
+      setQueryHistory(h => h.length > 20 ? [...h.slice(-19), query] : [...h, query]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
   // Prefetch LLM if no results and query is non-empty
   useEffect(() => {
     setAiVisible(false);
@@ -151,6 +162,39 @@ export default function Home() {
         </div>
 
       </main>
+      {/* History snippet */}
+      <HistorySnippet history={queryHistory} />
     </>
+  );
+}
+
+// --- HistorySnippet component ---
+type HistorySnippetProps = {
+  history: string[];
+};
+
+function HistorySnippet({ history }: HistorySnippetProps) {
+  const [expanded, setExpanded] = useState(false);
+  if (!history.length) return null;
+  return (
+    <div
+      className={`fixed bottom-4 right-4 z-50 transition-all duration-200 text-xs rounded shadow-lg bg-gray-200/20 dark:bg-gray-900/20 text-gray-400 dark:text-gray-600 backdrop-blur-sm
+        ${expanded ? 'p-4 bg-opacity-90 text-gray-800 dark:text-gray-100 w-64 h-64 overflow-auto cursor-pointer' : 'p-1 bg-opacity-10 hover:bg-opacity-60 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer'}`}
+      onClick={() => setExpanded(e => !e)}
+      title={expanded ? 'Click to collapse' : 'Click to expand'}
+    >
+      {expanded ? (
+        <>
+          <div className="font-bold mb-2 text-sm text-blue-700 dark:text-blue-300">Search History</div>
+          <ul>
+            {history.map((item, i) => (
+              <li key={i} className="truncate py-1 border-b border-gray-100 dark:border-gray-800 last:border-0">{item}</li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <span>History</span>
+      )}
+    </div>
   );
 }
